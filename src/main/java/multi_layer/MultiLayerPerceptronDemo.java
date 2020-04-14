@@ -32,7 +32,6 @@ public class MultiLayerPerceptronDemo {
         XYChart chart = new XYChartBuilder().title("Multi layer perceptron").xAxisTitle("x").yAxisTitle("y")
                                                                     .theme(Styler.ChartTheme.Matlab).build();
         chart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
-        
         chart.getStyler().setXAxisMin(-1.0);
         chart.getStyler().setXAxisMax(7.0);
         chart.getStyler().setYAxisMin(-1.0);
@@ -76,13 +75,13 @@ public class MultiLayerPerceptronDemo {
             if (!fast && sumOfSquaredErrors < 0.008 * totalPoints) {
                 sleepTime = 1;
                 fast = true;
-                System.out.println("fast");
+//                System.out.println("fast");
             }
 
             else if (!normal && sumOfSquaredErrors < 0.5 * totalPoints) {
                 sleepTime = 10;
                 normal = true;
-                System.out.println("normal");
+//                System.out.println("normal");
             }
 
             sumOfSquaredErrors = 0;
