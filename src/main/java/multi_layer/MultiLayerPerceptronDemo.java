@@ -5,32 +5,38 @@ import org.knowm.xchart.SwingWrapper;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
 import org.knowm.xchart.XYSeries;
+import org.knowm.xchart.style.Styler;
 
 import java.util.ArrayList;
 
-import static utils.Plotter.getLineCoordinates;
-import static utils.Plotter.getRandomCoordinates;
+import static java.lang.Math.pow;
+import static utils.Util.getCircleCoordinates;
+import static utils.Util.getLineCoordinates;
 
 public class MultiLayerPerceptronDemo {
 
     public static void main(String[] args) {
-        double alpha = 0.01;
-        int sleepTime = 1;
+        double alpha = 0.1;
 
-        int amountOfPoints = 30;
+        int amountOfPoints = 100;
+        int amountOfGroups = 2;
 
-        double[] classAX = getRandomCoordinates(1, 4, amountOfPoints);
-        double[] classAY = getRandomCoordinates(3, 4, amountOfPoints);
+        Pair<double[], double[]> classA = getCircleCoordinates(new double[]{3, 3}, 2, 3, amountOfPoints);
+        double[] classAX = classA.getValue0();
+        double[] classAY = classA.getValue1();
 
-        double[] classBX = getRandomCoordinates(1, 4, amountOfPoints);
-        double[] classBY = getRandomCoordinates(1, 2, amountOfPoints);
+        Pair<double[], double[]> classB = getCircleCoordinates(new double[]{3, 3}, 0, 1.5, amountOfPoints);
+        double[] classBX = classB.getValue0();
+        double[] classBY = classB.getValue1();
 
-        XYChart chart = new XYChartBuilder().build();
+        XYChart chart = new XYChartBuilder().title("Multi layer perceptron").xAxisTitle("x").yAxisTitle("y")
+                                                                    .theme(Styler.ChartTheme.Matlab).build();
         chart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
-        chart.getStyler().setXAxisMin(0.0);
-        chart.getStyler().setXAxisMax(5.0);
-        chart.getStyler().setYAxisMin(0.0);
-        chart.getStyler().setYAxisMax(5.0);
+        
+        chart.getStyler().setXAxisMin(-1.0);
+        chart.getStyler().setXAxisMax(7.0);
+        chart.getStyler().setYAxisMin(-1.0);
+        chart.getStyler().setYAxisMax(7.0);
 
         XYSeries seriesA = chart.addSeries("A", classAX, classAY);
         seriesA.setXYSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Scatter);
@@ -38,17 +44,18 @@ public class MultiLayerPerceptronDemo {
         XYSeries seriesB = chart.addSeries("B", classBX, classBY);
         seriesB.setXYSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Scatter);
 
-        MultiLayerPerceptron perceptron = new MultiLayerPerceptron(2, 1, 2, alpha);
+        MultiLayerPerceptron perceptron = new MultiLayerPerceptron(2, 4, alpha);
 
         ArrayList<Pair<double[], Double>> results = perceptron.getResults();
 
         for (int i = 0; i < perceptron.getHiddenDimension(); i++) {
             Pair<double[], Double> result = results.get(i);
             Pair<double[], double[]> coordinates = getLineCoordinates(result.getValue0(), result.getValue1());
-            chart.addSeries("Boundary " + i + 1, coordinates.getValue0(), coordinates.getValue1());
+            chart.addSeries("Boundary " + (i + 1), coordinates.getValue0(), coordinates.getValue1());
         }
 
         SwingWrapper<XYChart> swingWrapper = new SwingWrapper<>(chart);
+
         swingWrapper.displayChart();
 
         try {
@@ -57,22 +64,43 @@ public class MultiLayerPerceptronDemo {
             System.out.println(e.getMessage());
         }
 
-        boolean errorless = false;
-        while (!errorless) {
-            errorless = true;
-            for (int i = 0; i < amountOfPoints; i++) {
-                if (perceptron.process(new double[]{classAX[i], classAY[i]}, 1) != 1) {
-                    errorless = false;
-                }
-                if (perceptron.process(new double[]{classBX[i], classBY[i]}, 2) != 2) {
-                    errorless = false;
-                }
+        boolean normal = false;
+        boolean fast = false;
+
+        int totalPoints = amountOfPoints * amountOfGroups;
+        int sleepTime = 50;
+
+        double sumOfSquaredErrors = Double.MAX_VALUE;
+        while (sumOfSquaredErrors > 0.0008 * totalPoints) {
+
+            if (!fast && sumOfSquaredErrors < 0.008 * totalPoints) {
+                sleepTime = 1;
+                fast = true;
+                System.out.println("fast");
             }
+
+            else if (!normal && sumOfSquaredErrors < 0.5 * totalPoints) {
+                sleepTime = 10;
+                normal = true;
+                System.out.println("normal");
+            }
+
+            sumOfSquaredErrors = 0;
+            for (int i = 0; i < classAX.length; i++) {
+                double actualOutput = perceptron.process(new double[]{classAX[i], classAY[i]}, 0);
+                sumOfSquaredErrors += pow(actualOutput, 2);
+            }
+            for (int i = 0; i < classBX.length; i++) {
+                double actualOutput = perceptron.process(new double[]{classBX[i], classBY[i]}, 1);
+                sumOfSquaredErrors += pow(1 - actualOutput, 2);
+            }
+
+            results = perceptron.getResults();
 
             for (int i = 0; i < perceptron.getHiddenDimension(); i++) {
                 Pair<double[], Double> result = results.get(i);
                 Pair<double[], double[]> coordinates = getLineCoordinates(result.getValue0(), result.getValue1());
-                chart.updateXYSeries("Boundary " + i + 1, coordinates.getValue0(), coordinates.getValue1(), null);
+                chart.updateXYSeries("Boundary " + (i + 1), coordinates.getValue0(), coordinates.getValue1(), null);
             }
 
             swingWrapper.repaintChart();

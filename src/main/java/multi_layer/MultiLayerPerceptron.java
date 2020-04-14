@@ -5,6 +5,7 @@ import multi_layer.neurons.OutputNeuron;
 import org.javatuples.Pair;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MultiLayerPerceptron {
@@ -17,29 +18,24 @@ public class MultiLayerPerceptron {
 
     private int inputDimension;
     private int hiddenDimension;
-    private int outputDimension;
 
     private List<HiddenNeuron> hiddenLayer;
-    private List<OutputNeuron> outputLayer;
+    private OutputNeuron outputNeuron;
 
-    public MultiLayerPerceptron(int inputDimension, int hiddenDimension, int outputDimension, double alpha) {
+    public MultiLayerPerceptron(int inputDimension, int hiddenDimension, double alpha) {
         MultiLayerPerceptron.alpha = alpha;
 
         this.inputDimension = inputDimension;
         //hiddenDimension = (inputDimension - outputDimension) / 2 + outputDimension;
         this.hiddenDimension = hiddenDimension;
-        this.outputDimension = outputDimension;
 
 
         hiddenLayer = new ArrayList<>(hiddenDimension);
-        outputLayer = new ArrayList<>(outputDimension);
-
         for (int i = 0; i < hiddenDimension; i++) {
             hiddenLayer.add(new HiddenNeuron(inputDimension));
         }
-        for (int i = 0; i < outputDimension; i++) {
-            outputLayer.add(new OutputNeuron(hiddenDimension));
-        }
+
+        outputNeuron = new OutputNeuron(hiddenDimension);
     }
 
     public int getInputDimension() {
@@ -48,10 +44,6 @@ public class MultiLayerPerceptron {
 
     public int getHiddenDimension() {
         return hiddenDimension;
-    }
-
-    public int getOutputDimension() {
-        return outputDimension;
     }
 
     public ArrayList<Pair<double[], Double>> getResults() {
@@ -64,7 +56,7 @@ public class MultiLayerPerceptron {
         return results;
     }
 
-    int process(double[] inputs, Integer target) {
+    double process(double[] inputs, Integer target) {
         if (inputs.length != inputDimension) {
             throw new IllegalArgumentException("Inputs has wrong dimension");
         }
@@ -76,49 +68,23 @@ public class MultiLayerPerceptron {
 
         double[] hiddenOutputs = getHiddenOutputs();
 
-        for (OutputNeuron neuron : outputLayer) {
-            neuron.calculateOutput(hiddenOutputs);
-        }
+        outputNeuron.calculateOutput(hiddenOutputs);
 
         // backward propagation, only if a target is given
         // if no target is given, only an output is predicted
         if (target != null) {
-            if (target > outputDimension) {
+            if (target != 0 && target != 1) {
                 throw new IllegalArgumentException("Target class out of bounds");
             }
 
-            // determine desired output
-            double[] desiredOutputs = new double[outputDimension];
-            for (int i = 0; i < outputDimension; i++) {
-                if (i == target - 1) {
-                    desiredOutputs[i] = 1;
-                } else {
-                    desiredOutputs[i] = 0;
-                }
-            }
-
-            for (int i = 0; i < outputDimension; i++) {
-                outputLayer.get(i).updateWeights(hiddenOutputs, desiredOutputs[i]);
-            }
+            outputNeuron.updateWeights(hiddenOutputs, target);
 
             for (int i = 0; i < hiddenDimension; i++) {
-                hiddenLayer.get(i).updateWeights(i, outputLayer, inputs);
+                hiddenLayer.get(i).updateWeights(i, outputNeuron, inputs);
             }
         }
 
-        // determine actual output
-        double maxOutput = 0;
-        int maxI = -1;
-        for (int i = 0; i < outputDimension; i++) {
-            double output = outputLayer.get(i).getOutput();
-
-            if (output > maxOutput) {
-                maxOutput = output;
-                maxI = i;
-            }
-        }
-
-        return maxI + 1;
+        return outputNeuron.getOutput();
     }
 
     private double[] getHiddenOutputs() {

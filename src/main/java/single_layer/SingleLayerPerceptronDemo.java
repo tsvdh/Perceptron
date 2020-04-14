@@ -10,8 +10,8 @@ import org.knowm.xchart.style.Styler;
 import java.util.LinkedList;
 import java.util.List;
 
-import static utils.Plotter.getLineCoordinates;
-import static utils.Plotter.getRandomCoordinates;
+import static utils.Util.getLineCoordinates;
+import static utils.Util.getRectangleCoordinates;
 
 class SingleLayerPerceptronDemo {
 
@@ -23,18 +23,16 @@ class SingleLayerPerceptronDemo {
 
         int amountOfPoints = 30;
 
-        double[] classAX = getRandomCoordinates(1, 4, amountOfPoints);
-        double[] classAY = getRandomCoordinates(3, 4, amountOfPoints);
+        Pair<double[], double[]> classA = getRectangleCoordinates(1, 4, 3, 4, amountOfPoints);
 
-        double[] classBX = getRandomCoordinates(1, 3, amountOfPoints);
-        double[] classBY = getRandomCoordinates(1, 2.5, amountOfPoints);
+        Pair<double[], double[]> classB = getRectangleCoordinates(1, 3, 1, 2.5, amountOfPoints);
 
         List<Pair<double[], Integer>> points = new LinkedList<>();
-        for (int i = 0; i < classAX.length; i++) {
-            points.add(Pair.with(new double[]{classAX[i], classAY[i]}, 0));
+        for (int i = 0; i < classA.getValue0().length; i++) {
+            points.add(Pair.with(new double[]{classA.getValue0()[i], classA.getValue1()[i]}, 0));
         }
-        for (int i = 0; i < classBX.length; i++) {
-            points.add(Pair.with(new double[]{classBX[i], classBY[i]}, 1));
+        for (int i = 0; i < classB.getValue0().length; i++) {
+            points.add(Pair.with(new double[]{classB.getValue0()[i], classB.getValue1()[i]}, 1));
         }
 
         perceptron.setPoints(points);
@@ -51,10 +49,10 @@ class SingleLayerPerceptronDemo {
         //chart.getStyler().setPlotGridLinesVisible(false);
         //chart.getStyler().setAxisTicksVisible(false);
 
-        XYSeries seriesA = chart.addSeries("A", classAX, classAY);
+        XYSeries seriesA = chart.addSeries("A", classA.getValue0(), classA.getValue1());
         seriesA.setXYSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Scatter);
 
-        XYSeries seriesB = chart.addSeries("B", classBX, classBY);
+        XYSeries seriesB = chart.addSeries("B", classB.getValue0(), classB.getValue1());
         seriesB.setXYSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Scatter);
 
         Pair<double[], double[]> lineCoordinates = getLineCoordinates(perceptron.getWeights(), perceptron.getTheta());
