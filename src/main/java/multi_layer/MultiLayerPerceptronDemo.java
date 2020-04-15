@@ -12,20 +12,23 @@ import java.util.ArrayList;
 import static java.lang.Math.pow;
 import static utils.Util.getCircleCoordinates;
 import static utils.Util.getLineCoordinates;
+import static utils.Util.getRectangleCoordinates;
 
 public class MultiLayerPerceptronDemo {
 
     public static void main(String[] args) {
         double alpha = 0.1;
 
-        int amountOfPoints = 100;
+        int amountOfPoints = 200;
         int amountOfGroups = 2;
 
         Pair<double[], double[]> classA = getCircleCoordinates(new double[]{3, 3}, 2, 3, amountOfPoints);
+//        Pair<double[], double[]> classA = getRectangleCoordinates(0, 6, 3.5, 6, amountOfPoints);
         double[] classAX = classA.getValue0();
         double[] classAY = classA.getValue1();
 
         Pair<double[], double[]> classB = getCircleCoordinates(new double[]{3, 3}, 0, 1.5, amountOfPoints);
+//        Pair<double[], double[]> classB = getRectangleCoordinates(0, 6, 0, 2.5, amountOfPoints);
         double[] classBX = classB.getValue0();
         double[] classBY = classB.getValue1();
 
@@ -58,7 +61,7 @@ public class MultiLayerPerceptronDemo {
         swingWrapper.displayChart();
 
         try {
-            Thread.sleep(2000);
+            Thread.sleep(8000);
         } catch (InterruptedException e) {
             System.out.println(e.getMessage());
         }
@@ -70,7 +73,7 @@ public class MultiLayerPerceptronDemo {
         int sleepTime = 50;
 
         double sumOfSquaredErrors = Double.MAX_VALUE;
-        while (sumOfSquaredErrors > 0.0008 * totalPoints) {
+        while (sumOfSquaredErrors > 0.0001 * totalPoints) {
 
             if (!fast && sumOfSquaredErrors < 0.008 * totalPoints) {
                 sleepTime = 1;
